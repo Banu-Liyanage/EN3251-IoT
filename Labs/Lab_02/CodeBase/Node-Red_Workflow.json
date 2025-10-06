@@ -1,0 +1,398 @@
+[
+  {
+    "id": "tab1",
+    "type": "tab",
+    "label": "OpenWeather Dashboard (Diag)",
+    "disabled": false,
+    "info": ""
+  },
+  {
+    "id": "ui_tab1",
+    "type": "ui_tab",
+    "z": "",
+    "name": "Weather",
+    "icon": "dashboard",
+    "disabled": false,
+    "hidden": false
+  },
+  {
+    "id": "ui_group1",
+    "type": "ui_group",
+    "z": "",
+    "name": "Overview",
+    "tab": "ui_tab1",
+    "order": 1,
+    "disp": true,
+    "width": "12",
+    "collapse": false
+  },
+  {
+    "id": "inject1",
+    "type": "inject",
+    "z": "tab1",
+    "name": "Every 5 min",
+    "props": [
+      {
+        "p": "payload"
+      }
+    ],
+    "repeat": "300",
+    "crontab": "",
+    "once": true,
+    "onceDelay": "0.5",
+    "topic": "",
+    "payload": "",
+    "payloadType": "str",
+    "x": 140,
+    "y": 100,
+    "wires": [
+      [
+        "fn_build"
+      ]
+    ]
+  },
+  {
+    "id": "fn_build",
+    "type": "function",
+    "z": "tab1",
+    "name": "Build OpenWeather request",
+    "func": "// Edit your coordinates:\nconst lat = 6.9271; // Colombo\nconst lon = 79.8612;\nconst key = env.get('OPENWEATHER_API_KEY') || 'b9758a7b16bffc5e00193062cc28e1ad';\n\nmsg.method = 'GET';\nmsg.url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${key}&units=metric`;\nmsg.headers = { 'User-Agent':'Node-RED' };\nmsg.timeout = 10000; // 10s\nreturn msg;",
+    "outputs": 1,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 380,
+    "y": 100,
+    "wires": [
+      [
+        "http1"
+      ]
+    ]
+  },
+  {
+    "id": "http1",
+    "type": "http request",
+    "z": "tab1",
+    "name": "GET /data/2.5/weather",
+    "method": "use",
+    "ret": "obj",
+    "paytoqs": "ignore",
+    "url": "",
+    "persist": false,
+    "authType": "",
+    "senderr": false,
+    "headers": [],
+    "x": 690,
+    "y": 100,
+    "wires": [
+      [
+        "dbg_status",
+        "dbg_payload",
+        "fn_split",
+        "change_topic"
+      ]
+    ]
+  },
+  {
+    "id": "dbg_status",
+    "type": "debug",
+    "z": "tab1",
+    "name": "statusCode",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "statusCode",
+    "targetType": "msg",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 940,
+    "y": 60,
+    "wires": []
+  },
+  {
+    "id": "dbg_payload",
+    "type": "debug",
+    "z": "tab1",
+    "name": "payload",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 930,
+    "y": 100,
+    "wires": []
+  },
+  {
+    "id": "catch1",
+    "type": "catch",
+    "z": "tab1",
+    "name": "Catch HTTP errors",
+    "scope": [
+      "http1"
+    ],
+    "uncaught": false,
+    "x": 680,
+    "y": 160,
+    "wires": [
+      [
+        "dbg_err"
+      ]
+    ]
+  },
+  {
+    "id": "dbg_err",
+    "type": "debug",
+    "z": "tab1",
+    "name": "error",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "error",
+    "targetType": "msg",
+    "x": 930,
+    "y": 160,
+    "wires": []
+  },
+  {
+    "id": "fn_split",
+    "type": "function",
+    "z": "tab1",
+    "name": "Split to gauges/text/chart",
+    "func": "const d = msg.payload || {};\nconst main = d.main || {};\nconst wind = d.wind || {};\nconst w = (d.weather || [{}])[0];\nconst loc = `${d.name || ''}, ${(d.sys || {}).country || ''}`.trim();\nconst when = d.dt ? new Date(d.dt * 1000).toLocaleString() : 'n/a';\nlet out1 = { payload: Number(main.temp), topic: 'Temp °C' };\nlet out2 = { payload: Number(main.humidity), topic: 'Humidity %' };\nlet out3 = { payload: Number(wind.speed), topic: 'Wind m/s' };\nlet out4 = { payload: `Location: ${loc}\\n${w.main || ''} - ${w.description || ''}\\nTime: ${when}` };\nlet out5 = { payload: Number(main.temp), topic: 'Temperature' };\nreturn [out1, out2, out3, out4, out5];",
+    "outputs": 5,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 220,
+    "y": 220,
+    "wires": [
+      [
+        "g_temp"
+      ],
+      [
+        "g_hum"
+      ],
+      [
+        "g_wind"
+      ],
+      [
+        "ui_text1"
+      ],
+      [
+        "ui_chart1"
+      ]
+    ]
+  },
+  {
+    "id": "g_temp",
+    "type": "ui_gauge",
+    "z": "tab1",
+    "name": "Temperature (°C)",
+    "group": "ui_group1",
+    "order": 1,
+    "width": 4,
+    "height": 4,
+    "gtype": "gage",
+    "title": "Temperature (°C)",
+    "label": "°C",
+    "format": "{{value}}",
+    "min": "-10",
+    "max": "50",
+    "colors": [
+      "#00b500",
+      "#e6e600",
+      "#ca3838"
+    ],
+    "seg1": "",
+    "seg2": "",
+    "x": 540,
+    "y": 200,
+    "wires": []
+  },
+  {
+    "id": "g_hum",
+    "type": "ui_gauge",
+    "z": "tab1",
+    "name": "Humidity (%)",
+    "group": "ui_group1",
+    "order": 2,
+    "width": 4,
+    "height": 4,
+    "gtype": "gage",
+    "title": "Humidity (%)",
+    "label": "%",
+    "format": "{{value}}",
+    "min": "0",
+    "max": "100",
+    "colors": [
+      "#00b500",
+      "#e6e600",
+      "#ca3838"
+    ],
+    "seg1": "",
+    "seg2": "",
+    "x": 540,
+    "y": 260,
+    "wires": []
+  },
+  {
+    "id": "g_wind",
+    "type": "ui_gauge",
+    "z": "tab1",
+    "name": "Wind (m/s)",
+    "group": "ui_group1",
+    "order": 3,
+    "width": 4,
+    "height": 4,
+    "gtype": "gage",
+    "title": "Wind (m/s)",
+    "label": "m/s",
+    "format": "{{value}}",
+    "min": "0",
+    "max": "20",
+    "colors": [
+      "#00b500",
+      "#e6e600",
+      "#ca3838"
+    ],
+    "seg1": "",
+    "seg2": "",
+    "x": 540,
+    "y": 320,
+    "wires": []
+  },
+  {
+    "id": "ui_text1",
+    "type": "ui_text",
+    "z": "tab1",
+    "group": "ui_group1",
+    "order": 4,
+    "width": 12,
+    "height": 2,
+    "name": "Summary",
+    "label": "Summary",
+    "format": "{{msg.payload}}",
+    "layout": "row-spread",
+    "x": 540,
+    "y": 380,
+    "wires": []
+  },
+  {
+    "id": "ui_chart1",
+    "type": "ui_chart",
+    "z": "tab1",
+    "name": "Temperature over time",
+    "group": "ui_group1",
+    "order": 5,
+    "width": 12,
+    "height": 6,
+    "label": "Temperature over time",
+    "chartType": "line",
+    "legend": "false",
+    "xformat": "HH:mm",
+    "interpolate": "linear",
+    "nodata": "Waiting...",
+    "dot": false,
+    "ymin": "-10",
+    "ymax": "50",
+    "removeOlder": "24",
+    "removeOlderPoints": "",
+    "removeOlderUnit": "3600",
+    "cutout": 0,
+    "useOneColor": false,
+    "useUTC": false,
+    "colors": [
+      "#1f77b4",
+      "#aec7e8",
+      "#ff7f0e",
+      "#2ca02c"
+    ],
+    "outputs": 1,
+    "x": 560,
+    "y": 440,
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "change_topic",
+    "type": "change",
+    "z": "tab1",
+    "name": "Set MQTT topic",
+    "rules": [
+      {
+        "t": "set",
+        "p": "topic",
+        "pt": "msg",
+        "to": "uom/en3251/banuka/lab2/weather",
+        "tot": "str"
+      }
+    ],
+    "action": "",
+    "property": "",
+    "from": "",
+    "to": "",
+    "reg": false,
+    "x": 720,
+    "y": 200,
+    "wires": [
+      [
+        "mqtt_out"
+      ]
+    ]
+  },
+  {
+    "id": "mqtt_out",
+    "type": "mqtt out",
+    "z": "tab1",
+    "name": "Publish full JSON (optional)",
+    "topic": "",
+    "qos": "1",
+    "retain": "false",
+    "respTopic": "",
+    "contentType": "",
+    "userProps": "",
+    "correl": "",
+    "expiry": "",
+    "broker": "mqtt_broker",
+    "x": 1020,
+    "y": 200,
+    "wires": []
+  },
+  {
+    "id": "mqtt_broker",
+    "type": "mqtt-broker",
+    "name": "test.mosquitto.org",
+    "broker": "test.mosquitto.org",
+    "port": "1883",
+    "clientid": "",
+    "autoConnect": true,
+    "usetls": false,
+    "protocolVersion": "5",
+    "keepalive": "60",
+    "cleansession": true,
+    "birthTopic": "",
+    "birthQos": "0",
+    "birthPayload": "",
+    "birthMsg": {},
+    "closeTopic": "",
+    "closeQos": "0",
+    "closePayload": "",
+    "closeMsg": {},
+    "willTopic": "",
+    "willQos": "0",
+    "willPayload": "",
+    "willMsg": {},
+    "sessionExpiry": ""
+  }
+]
