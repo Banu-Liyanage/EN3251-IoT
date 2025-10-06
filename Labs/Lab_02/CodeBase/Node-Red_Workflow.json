@@ -56,7 +56,7 @@
     "type": "function",
     "z": "tab1",
     "name": "Build OpenWeather request",
-    "func": "// Edit your coordinates:\nconst lat = 6.9271; // Colombo\nconst lon = 79.8612;\nconst key = env.get('OPENWEATHER_API_KEY') || 'b9758a7b16bffc5e00193062cc28e1ad';\n\nmsg.method = 'GET';\nmsg.url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${key}&units=metric`;\nmsg.headers = { 'User-Agent':'Node-RED' };\nmsg.timeout = 10000; // 10s\nreturn msg;",
+    "func": "// Edit your coordinates:\nconst lat = 6.9271; // Colombo\nconst lon = 79.8612;\nconst key = env.get('OPENWEATHER_API_KEY') || 'API-KEY-HERE';\n\nmsg.method = 'GET';\nmsg.url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${key}&units=metric`;\nmsg.headers = { 'User-Agent':'Node-RED' };\nmsg.timeout = 10000; // 10s\nreturn msg;",
     "outputs": 1,
     "timeout": 0,
     "noerr": 0,
