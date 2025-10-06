@@ -1,0 +1,8 @@
+{
+  "Temperature": 26.4,
+  "Humidity": 63,
+  "Pressure": 1007,
+  "DeviceID": "lab-sensor-01",
+  "Timestamp": "2025-09-18T12:00:00+05:30",
+  "Author": "Banuka Liyanage"
+}
