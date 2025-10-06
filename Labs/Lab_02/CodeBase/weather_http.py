@@ -1,6 +1,6 @@
 import requests
 
-API_KEY = "b9758a7b16bffc5e00193062cc28e1ad"  
+API_KEY = "" #Replace with your API key  
 BASE_URL = "https://api.openweathermap.org/data/2.5/weather"
 
 def get_weather(city, country_code=None, units="metric"):
@@ -23,3 +23,4 @@ if __name__ == "__main__":
     city = input("Enter City (e.g., Colombo): ").strip()
     cc   = input("Enter Country Code (optional, e.g., LK): ").strip() or None
     get_weather(city, cc)
+
